@@ -58,16 +58,41 @@ class Wordification_Effort:
             exactly one string from each list and concatenating them
         """
         # TODO this method title kinda sucks right now
+        # TODO input checking interpret any input as strings? (cast'em?)
         possible_resultant_strings = []
 
-        # make a list of indicies for each list in the list of lists
-        # start em' all at zero
-        # increment the first one
-        # if it hits its end, zero it and increment the next one (if that one hits it's end, ditto, etc.)
-        # concatenate all those indices of those lists together
+        # establish total number of combinations to check
+        # make a list of indices for each list in the list of lists
+        total_combinations = 1
+        current_list_indices = []
+        for list in list_of_lists_of_string_options:
+            total_combinations *= len(list)
+            # start em' all at zero
+            current_list_indices.append(0)
+
+        # TODO inelegant right now, but is there a cleaner way that's not way more convoluted?
+        current_list_indices[0]=-1;
+
+        for iteration in range(total_combinations):
+            index_of_list_to_increment = 0;
+            # increment the first one
+            current_list_indices[index_of_list_to_increment] += 1;
+            # if it hits its end, zero it and increment the next one (if that one hits it's end, ditto, etc.)
+            while current_list_indices[index_of_list_to_increment] == len(list_of_lists_of_string_options[index_of_list_to_increment]):
+                current_list_indices[index_of_list_to_increment] = 0
+                index_of_list_to_increment += 1; #TODO go through and make sure I'm consistent with ++ vs +=1
+                current_list_indices[index_of_list_to_increment] += 1;
+                # wrap around
+                if index_of_list_to_increment == len(current_list_indices):
+                    index_of_list_to_increment = 0;
+            # concatenate all those indices of those lists together
+            result_string = ""
+            for index in range(len(list_of_lists_of_string_options)):
+                result_string += list_of_lists_of_string_options[index][current_list_indices[index]]
+            possible_resultant_strings.append(result_string)
 
         # TODO redundancy check here? pare down of repeats, like?
-        # to eliminate the DOG|333 vs DOG|3|33 vs DOG|3|3|3 issue, yeah. Just compare the final concatenated string versions, and keep only the best score.
+        # to eliminate the DOG|333 vs DOG|3|33 vs DOG|3|3|3 issue. Compare the final concatenated string versions, and keep only the best score.
 
         # TODO I think this is where the recording of whether things are words or not words or where they are will happen
         # TODO and to a larger extend the creation of the wordification objects
@@ -77,26 +102,85 @@ class Wordification_Effort:
         # differentiate numbers and letters based whether the first one is a letter or a number
         return possible_resultant_strings
 
-    def all_substring_sets(self):
+    def all_substring_sets(self, test_string):
         """
-            Returns a list of all the possible substrings sets that can be made by slicing the phone number
+            Returns a list of all the possible subdivisions that can be made by slicing the provided string any
             number of times without changing its order.
         """
-        substring_set_list = []
+        # TODO make this static and useful for any string or...?
+        # TODO substrings is a bad name here
+        slice_set_list = []
         # do the operation on self.phone_number
         # (or on a given string, for versatility? maybe the class is more trouble than it's worth?)
         # cut paradigm
         # for all possible numbers of cuts (zero to one minus the number of characters in the string we're sub stringing)
-            # create a list of cut indicies with that # of entries
-            # the first element of the list starts at zero, each subsequent is plus one each starting at one more than the last (first at 0)
-            # record a second list of "starting points" (?)
-            # move through all the valid cut configurations
-                # that is, increment the last cut. The end and beginning don't count, so min is one and max is size - one, ish
-                # If you can't validly increment the last cut, add one to the start index of the next one up the chain and reset the current indicies to the start ones
-                # subsection the string according to those indicies
-                    # that is, first do the subsection of the first cut, then of the first to the second, then of the second to the third, then of just the third to the end, for example
-                # add the subsections to the list
-        return substring_set_list
+        for valid_number_of_possible_cuts in range(len(test_string)):
+            # create a list of cut indices with that # of entries
+            current_cut_indices = []
+
+            # initialize the cuts
+            for cut in range(valid_number_of_possible_cuts):
+                # the first relevant place is just after the first letter, and the rest are incremented from there
+                current_cut_indices.append(cut + 1)
+
+            # start with the last cut down the line and work back
+            index_of_cut_to_move = len(current_cut_indices) - 1
+
+            slicing_complete = False
+
+            # the zero case. Easier to just spot-fix it than to get the slicing operation to work through empty lists.
+            if valid_number_of_possible_cuts == 0:
+                slicing_complete = True
+                slice_set_list.append([test_string])
+
+            # iterate through each slice, storing the resulting segments in the master list
+            while not slicing_complete:
+                # reset which cut to move to the last most one
+                index_of_cut_to_move = len(current_cut_indices) - 1
+                # put together the start and end cut points with the current cut indices
+                substring_values = [0]
+                substring_values.extend(current_cut_indices)
+                substring_values.append(len(test_string))
+                # do the substring-ing
+                slices_for_this_cut_set = []
+                for index in range(len(substring_values) - 1):
+                    slices_for_this_cut_set.append(test_string[substring_values[index]:substring_values[index + 1]])
+                # save this subdivision set in the master list
+                slice_set_list.append(slices_for_this_cut_set)
+
+                # Check if the current cut can validly increment. If not, try the next cut up the line.
+                # Also handle the stopping condition - if the earliest cut can't be incremented
+                while not self.cut_advance_is_valid(current_cut_indices, index_of_cut_to_move, len(test_string)):
+                    if index_of_cut_to_move == 0:
+                        slicing_complete = True
+                        break
+                    else:
+                        index_of_cut_to_move -= 1
+
+                # increment (here so it always runs once)
+                current_cut_indices[index_of_cut_to_move] += 1
+                # reset all the following cuts to be together in line after the moved cut
+                for cut_number in range(len(current_cut_indices)):
+                    if cut_number > index_of_cut_to_move:
+                        current_cut_indices[cut_number] = current_cut_indices[cut_number - 1] + 1
+
+        return slice_set_list
+
+    def cut_advance_is_valid(self, current_cut_indices, index_of_cut_to_move, cut_string_length):
+        """
+            a helper function for all_substring_sets. Return boolean representing if advancing the provided
+            cut to move would conflict with any existing cuts or with the limits of the string being cut, as
+            determined by the provided set of cut indicies and the length of the cut string
+        """
+        potential_new_value = current_cut_indices[index_of_cut_to_move] + 1
+        too_far = (potential_new_value == cut_string_length)
+        conflicts_with_next_cut = False
+        # checking the lastmost cut will give an index out of bounds, and it can't conflict with a later cut anyway.
+        # So don't check it. 
+        if index_of_cut_to_move != (len(current_cut_indices) - 1):
+            conflicts_with_next_cut = (potential_new_value == current_cut_indices[index_of_cut_to_move + 1])
+        return not (too_far or conflicts_with_next_cut)
+
 
     def generate_all_wordifications(self):
         """
@@ -155,6 +239,32 @@ def main():
         # prompt for phone number
         # object to improper formatting, but allow it anyway on insistance
         # ask if they want the best, all of them, or a random one, or exit to one level out, and supply the choice with the associated calls
+
+    test_merge_and_concatenate = True
+    test_all_substring_sets = False
+
+    if test_merge_and_concatenate:
+        test_effort = Wordification_Effort("401-867-5309")
+        #list_of_lists_of_test_strings = [["I ","You ","We "],["like ","hate "],["vanilla.","chocolate.","strawberry."]]
+        list_of_lists_of_test_strings = [['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'], ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']]
+        resulting_strings = test_effort.merge_and_concatenate_string_lists(list_of_lists_of_test_strings)
+
+        for index in range(len(resulting_strings)):
+            print(str(index + 1) + ": " + resulting_strings[index])
+
+    if test_all_substring_sets:
+        test_effort = Wordification_Effort("401-867-5309")
+        test_string = "horse"
+        resulting_string_sets = test_effort.all_substring_sets(test_string)
+        counter = 1
+        print_str = ""
+        for set in resulting_string_sets:
+            print_str += str(counter) + ": "
+            counter += 1
+            print_str += str(set) + "\n"
+        print(print_str)
+
+
 
 
 if __name__ == "__main__":
