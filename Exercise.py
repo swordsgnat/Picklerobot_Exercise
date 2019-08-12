@@ -8,23 +8,25 @@ TODO
 # pieces of information and most of the methods are static, I think this is cleaner.
 valid_word_set = set()
 
+
 def phone_dict_lookup(num_character):
     """
     :param num_character: a single number
     :return: a list of letters that correspond with that phone key. 0 and 1 are not represented.
     """
     phone_dict = {
-                    '2': ['a', 'b', 'c'],
-                    '3': ['d', 'e', 'f'],
-                    '4': ['g', 'h', 'i'],
-                    '5': ['j', 'k', 'l'],
-                    '6': ['m', 'n', 'o'],
-                    '7': ['p', 'q', 'r', 's'],
-                    '8': ['t', 'u', 'v'],
-                    '9': ['w', 'x', 'y', 'z']
-                 }
+        '2': ['a', 'b', 'c'],
+        '3': ['d', 'e', 'f'],
+        '4': ['g', 'h', 'i'],
+        '5': ['j', 'k', 'l'],
+        '6': ['m', 'n', 'o'],
+        '7': ['p', 'q', 'r', 's'],
+        '8': ['t', 'u', 'v'],
+        '9': ['w', 'x', 'y', 'z']
+    }
     # do this extra safely to avoid potential weird input issues
-    return phone_dict.get(str(num_character).strip().lower(),None)
+    return phone_dict.get(str(num_character).strip().lower(), None)
+
 
 def reverse_phone_dict_lookup(letter_character):
     """
@@ -32,44 +34,45 @@ def reverse_phone_dict_lookup(letter_character):
     :return: the phone key that corresponds with that letter
     """
     reverse_phone_dict = {
-                            'a': '2',
-                            'b': '2',
-                            'c': '2',
-                            'd': '3',
-                            'e': '3',
-                            'f': '3',
-                            'g': '4',
-                            'h': '4',
-                            'i': '4',
-                            'j': '5',
-                            'k': '5',
-                            'l': '5',
-                            'm': '6',
-                            'n': '6',
-                            'o': '6',
-                            'p': '7',
-                            'q': '7',
-                            'r': '7',
-                            's': '7',
-                            't': '8',
-                            'u': '8',
-                            'v': '8',
-                            'w': '9',
-                            'x': '9',
-                            'y': '9',
-                            'z': '9'
-                         }
+        'a': '2',
+        'b': '2',
+        'c': '2',
+        'd': '3',
+        'e': '3',
+        'f': '3',
+        'g': '4',
+        'h': '4',
+        'i': '4',
+        'j': '5',
+        'k': '5',
+        'l': '5',
+        'm': '6',
+        'n': '6',
+        'o': '6',
+        'p': '7',
+        'q': '7',
+        'r': '7',
+        's': '7',
+        't': '8',
+        'u': '8',
+        'v': '8',
+        'w': '9',
+        'x': '9',
+        'y': '9',
+        'z': '9'
+    }
     # do this extra safely to avoid potential weird input issues
     return reverse_phone_dict.get(str(letter_character).strip().lower(), None)
+
 
 def check_if_valid_english_word(string_to_check):
     """
     Validate string against provided bank of words.
     :param string_to_check: string undergoing validation
-    :param word_set: set of words considered valid
     :return: boolean indicating whether the provided string is represented in the valid set (True) or not (False)
     """
     return string_to_check.lower() in valid_word_set
+
 
 def number_to_words(provided_phone_number_string):
     """
@@ -80,13 +83,17 @@ def number_to_words(provided_phone_number_string):
     :param provided_phone_number_string: the phone number to wordify
     :return: Nothing. Simply outputs the result as per the project specifications.
     """
-    all_answers, best_answer, best_score = generate_all_wordifications(provided_phone_number_string, 1)
+    # does some minor input checking
+    cleaned_number_string, cleaning_required = clean_up_number_sequence(provided_phone_number_string)
+    all_answers, best_answer, best_score = generate_all_wordifications(cleaned_number_string, 1)
     print(best_answer[0])
     return
 
+
 def words_to_number(wordification):
     """
-    As per project specifications, "Outputs full-number version of a given wordification"
+    As per project specifications, "Outputs full-number version of a given wordification".
+    Keeps all symbols (non-letter non-numbers) as they are.
     :param wordification: A string representing a phone number partially or fully replaced with words
     :return: Nothing. Simply outputs all results as per the project specifications.
     """
@@ -98,8 +105,9 @@ def words_to_number(wordification):
             output_string += translation
         else:
             output_string += character
-    print(output_string)
+    print(output_string.upper())
     return
+
 
 def possible_one_from_each_list_permutations(list_of_lists_of_string_options):
     """
@@ -114,21 +122,22 @@ def possible_one_from_each_list_permutations(list_of_lists_of_string_options):
     # establish total number of permutations to check; make a list of indices for each list in the list of lists
     total_permutations = 1
     current_list_indices = []
-    for list in list_of_lists_of_string_options:
-        total_permutations *= len(list)
+    for internal_list in list_of_lists_of_string_options:
+        total_permutations *= len(internal_list)
         # set each index at the beginning of its respective list
         current_list_indices.append(0)
 
     # set the first index back by one to account for the first increment, allowing for a more elegant loop
-    current_list_indices[0] = -1;
+    current_list_indices[0] = -1
 
     # execute once for each result
     for iteration in range(total_permutations):
-        index_of_list_to_increment = 0;
+        index_of_list_to_increment = 0
         # increment the first one
-        current_list_indices[index_of_list_to_increment] += 1;
+        current_list_indices[index_of_list_to_increment] += 1
         # if it hits its end, zero it and increment the next one (if that one hits its end, ditto, etc.)
-        while current_list_indices[index_of_list_to_increment] == len(list_of_lists_of_string_options[index_of_list_to_increment]):
+        while current_list_indices[index_of_list_to_increment] == len(
+                list_of_lists_of_string_options[index_of_list_to_increment]):
             current_list_indices[index_of_list_to_increment] = 0
             index_of_list_to_increment += 1
             current_list_indices[index_of_list_to_increment] += 1
@@ -140,11 +149,12 @@ def possible_one_from_each_list_permutations(list_of_lists_of_string_options):
 
     return possible_resultant_strings
 
+
 def cut_advance_is_valid(current_cut_indices, index_of_cut_to_move, cut_string_length):
     """
     Return boolean representing if it would be permissible to increment the position of the provided cut, as defined
     by whether that incrementation would cause it to conflict with any other existing cuts or whether it cause the cut
-    position to exeed the length of the string being cut.
+    position to exceed the length of the string being cut.
     A helper function for all_possible_segmentations().
     :param current_cut_indices: Positions of all the current cuts in the string.
     :param index_of_cut_to_move: The index of the specific cut whose incrementation is being examined
@@ -159,6 +169,7 @@ def cut_advance_is_valid(current_cut_indices, index_of_cut_to_move, cut_string_l
     if index_of_cut_to_move != (len(current_cut_indices) - 1):
         conflicts_with_next_cut = (potential_new_value == current_cut_indices[index_of_cut_to_move + 1])
     return not (too_far or conflicts_with_next_cut)
+
 
 def all_possible_segmentations(string_to_segment):
     """
@@ -180,10 +191,7 @@ def all_possible_segmentations(string_to_segment):
             # the first relevant place is just after the first letter, and the rest are incremented from there
             current_cut_indices.append(cut + 1)
 
-        # start with the last cut down the line and work back
-        index_of_cut_to_move = len(current_cut_indices) - 1
-
-        # intialize stopping condition
+        # initialize stopping condition
         slicing_complete = False
 
         # the zero case. Easier to just spot-fix it than to get the slicing operation to work through empty lists.
@@ -225,6 +233,7 @@ def all_possible_segmentations(string_to_segment):
 
     return slice_group_list
 
+
 def score_wordification(wordification, num_valid_translation_parts):
     """
     Return an ad-hoc score for a given wordification and number of parts used to make it. Allows for the easier
@@ -264,9 +273,10 @@ def score_wordification(wordification, num_valid_translation_parts):
                     score -= 30
                 elif nums_before_first_word_begun == 4 and len(wordification) == 11 and first_character_is_one:
                     score -= 40
-    score += num_valid_translation_parts*10
+    score += num_valid_translation_parts * 10
 
     return score
+
 
 def generate_valid_translations(number_string):
     """
@@ -275,11 +285,10 @@ def generate_valid_translations(number_string):
     :param number_string: the string of numbers to fully translate (no partial translations)
     :return: the list of all full translations of the numbers into English words, plus the original all-number string
     """
-    valid_translations = []
+    valid_translations = [number_string]
 
     # always include the full number version as a valid translation, as partial wordifications are acceptable.
     # requires filtering out the full-number translation, though.
-    valid_translations.append(number_string)
 
     # place to store the lists of letters each number could be
     letter_possibilities = []
@@ -307,6 +316,7 @@ def generate_valid_translations(number_string):
             valid_translations.append(word)
 
     return valid_translations
+
 
 def generate_all_wordifications(phone_number, best_x_to_save):
     """
@@ -381,15 +391,20 @@ def generate_all_wordifications(phone_number, best_x_to_save):
     # return all three lists for outside use
     return wordifications_list, best_scorers, best_scores
 
+
 def all_wordifications(given_number):
     """
     As per project specifications, "Outputs all possible wordifications of a given number"
     :param given_number: a user-specified number
     :return: nothing, simply outputs as per specifications
     """
-    for wordification in generate_all_wordifications(given_number):
+    # does some minor error checking (clearing of symbols and the like)
+    cleaned_number, cleaning_required = clean_up_number_sequence(given_number)
+    wordification_list, best_scorer, best_score = generate_all_wordifications(cleaned_number, 1)
+    for wordification in wordification_list:
         print(wordification)
     return
+
 
 def run_various_tests():
     """
@@ -405,9 +420,10 @@ def run_various_tests():
     test_score_wordification = False
 
     if test_possible_one_from_each_list_permutations:
-        #list_of_lists_of_test_strings = [["I ","You ","We "],["like ","hate "],["vanilla.","chocolate.","strawberry."]]
+        # list_of_lists_of_test_strings = [["I ","You ","We "],
+        # ["like ","hate "],["vanilla.","chocolate.","strawberry."]]
         list_of_lists_of_test_strings = [['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
-                                        ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']]
+                                         ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']]
         resulting_strings = possible_one_from_each_list_permutations(list_of_lists_of_test_strings)
 
         for index in range(len(resulting_strings)):
@@ -456,10 +472,11 @@ def run_various_tests():
 
     if test_words_to_number:
         test_string = "877-CAs-HnoW"
-        resulting_string_groups = words_to_number(test_string)
+        words_to_number(test_string)
 
     if test_score_wordification:
-        print(score_wordification("1111erta456",3))
+        print(score_wordification("1111erta456", 3))
+
 
 def clean_up_number_sequence(proposed_number_sequence):
     """
@@ -472,7 +489,7 @@ def clean_up_number_sequence(proposed_number_sequence):
     for character in proposed_number_sequence:
         letter_translation = reverse_phone_dict_lookup(character)
         number_translation = phone_dict_lookup(character)
-        if letter_translation is None and number_translation == None:
+        if letter_translation is None and number_translation is None:
             cleaning_required = True
         elif letter_translation is not None:
             cleaned_string += letter_translation
@@ -482,6 +499,7 @@ def clean_up_number_sequence(proposed_number_sequence):
         else:
             raise ValueError('Some truly strange input was given')
     return cleaned_string, cleaning_required
+
 
 def main():
     """ nice UI and some tests probably """
@@ -498,161 +516,160 @@ def main():
 
     print(
         """
-        Hello, and welcome to the Picklerobot Wordification Software (TM), the one-stop
-        shop for all your turning-phone-numbers-into-words-partially-or-vice-versa needs!
-        
-        [press Enter to proceed to the main menu, and to your Wordification Experience!]
-        """
-         )
+Hello, and welcome to the Picklerobot Wordification Software (TM), the one-stop
+shop for all your turning-phone-numbers-into-words-partially-or-vice-versa needs!
 
-    input("")
+[press Enter to proceed to the main menu, and to your Wordification Experience!]
+        """
+    )
+
+    input("\t")
 
     choice = None
     while choice != "0":
         print(
             """
-            Main Menu
-            
-            0 - Quit and Exit
-            1 - Information on Wordification
-            2 - Wordify a Phone Number
-            3 - Decode a Wordified Phone Number
-            """
-             )
+Main Menu
 
-        choice = input("Enter the number of your choice: \t")
+0 - Quit and Exit
+1 - Information on Wordification
+2 - Wordify a Phone Number
+3 - Decode a Wordified Phone Number
+            """
+        )
+
+        choice = input("\tEnter the number of your choice:\t")
 
         if choice == "0":
-            print("Thank you for using Picklerobot's Wordification Software (TM)!")
+            print("\nThank you for using Picklerobot's Wordification Software (TM)!")
+            print("[Press Enter to exit]")
+            input("\t")
+            print("")
         elif choice == "1":
             print(
                 """
-                "Wordification" is the process of turning part of a phone number into one or more English
-                words via a standard phone-key-to-letter code, for the purpose of making that phone number 
-                easier to remember for the average person! 
-                This program allows you discover the possible wordifications of any sequence of numbers! Additionally, 
-                this program includes the Auto-Ranking System, which helps filter the best and most memorable 
-                wordifications out from the rest so that you, the user, don't have to spend so much time looking 
-                through somewhat awkward (though technically correct) wordifications! 
-                
-                This program also allows you to translate a wordified number (or any sequence of letters and/or 
-                numbers) back into the number sequence that it represents!
-                
-                [Press Enter to return to the Main Menu]
+"Wordification" is the process of turning part of a phone number into one or more English
+words via a standard phone-key-to-letter code, for the purpose of making that phone number 
+easier to remember for the average person! 
+This program allows you discover the possible wordifications of any sequence of numbers! Additionally, 
+this program includes the Auto-Ranking System, which helps filter the best and most memorable 
+wordifications out from the rest so that you, the user, don't have to spend so much time looking 
+through somewhat awkward (though technically correct) wordifications! 
+
+This program also allows you to translate a wordified number (or any sequence of letters and/or 
+numbers) back into the number sequence that it represents!
+
+[Press Enter to return to the Main Menu]
                 """
-                 )
-            input("")
+            )
+            input("\t")
         elif choice == "2":
             successful_sequence = False
+            return_to_menu = True
             while not successful_sequence:
                 print(
                     """
-                    Welcome to the Wordification Menu! Please enter the number sequence you wish to wordify!
+Welcome to the Wordification Menu! Please enter the number sequence you wish to wordify!
                     """
-                     )
-                number_seq = input("Number sequence:\t")
+                )
+                number_seq = input("\tNumber sequence:\t")
                 sequence, cleaning_required = clean_up_number_sequence(number_seq)
                 if cleaning_required:
                     clean_answer_achieved = False
                     while not clean_answer_achieved:
-                        print(
-                            "The sequence you entered was confusing to the software! Its best guess is that you meant: ")
+                        print("\nThe sequence you entered was confusing" +
+                              " to the software! Its best guess is that you meant:\n")
                         print(sequence)
-                        print("Is that correct? Please answer yes (Y), no (N), or back (B)!")
-                        clean_answer = input("").strip().lower()
+                        print("\nIs that correct? Please answer yes (Y) or no (N)!")
+                        clean_answer = input("\t").strip().lower()
                         if clean_answer == "y" or clean_answer == "yes":
-                            print("Great! Thank you for the clarification!")
+                            print("\nGreat! Thank you for the clarification!")
                             successful_sequence = True
                             clean_answer_achieved = True
+                            return_to_menu = False
                         elif clean_answer == "n" or clean_answer == "no":
-                            print("I'm sorry! Please, try again!")
-                        elif clean_answer == "b" or clean_answer == "back":
-                            continue
+                            print("\nI'm sorry! Please, try again!")
+                            clean_answer_achieved = True
                         else:
                             print(
                                 """
-                                I'm sorry! This software couldn't compute that input! 
+I'm sorry! This software couldn't compute that input! 
 
-                                [Press Enter to try again]
+[Press Enter to try again]
                                 """
-                                 )
-                            input("")
-                pos_int_recieved = False
-                while not pos_int_recieved:
-                    print(
-                        """ 
-                        Input successful!
-                        How many top wordifications would you like to show?
-                        
-                        Please enter a number (positive integer) or all (A)!
-                        """)
-                    pos_int = input("How many top wordifications would you like to show?").strip().lower()
-                    if pos_int == "all" or pos_int == "a":
-                        pos_int_recieved = True
-                        wordification_list, best_scorers, best_scores = generate_all_wordifications(sequence, 1)
-                        print("Here are your wordifications!")
-                        for wordification in wordification_list:
-                            print("\t" + wordification)
-                    elif int(pos_int) > 0:
-                        pos_int_recieved = True
-                        wordification_list, best_scorers, best_scores = generate_all_wordifications(sequence, int(pos_int))
-                        print("Here are your top-scoring wordifications!")
-                        for wordification in best_scorers:
-                            print("\t" + wordification)
-                    else:
-                        print(
-                            """
-                            I'm sorry! This software couldn't compute that input! 
+                            )
+                            clean_answer_achieved = True
+                            input("\t")
+                else:
+                    successful_sequence = True
+                    return_to_menu = False
+                if not return_to_menu:
+                    pos_int_received = False
+                    print("\nInput successful!")
+                    while not pos_int_received:
+                        print("\nHow many top wordifications would you like to show?")
+                        print("\tPlease enter a number (positive integer) or all (A):")
+                        pos_int = input("\t").strip().lower()
+                        if pos_int == "all" or pos_int == "a":
+                            pos_int_received = True
+                            wordification_list, best_scorers, best_scores = generate_all_wordifications(sequence, 1)
+                            print("\nHere are your wordifications!")
+                            for wordification in wordification_list:
+                                print("\t" + wordification.upper())
+                            print("[Press Enter to return to the Main Menu]")
+                            input("\t")
+                        else:
+                            valid_pos_int = True
+                            try:
+                                pos_int = int(pos_int)
+                            except ValueError:
+                                valid_pos_int = False
+                            if valid_pos_int and pos_int <= 0:
+                                valid_pos_int = False
 
-                            [Press Enter to try again]
-                            """
-                        )
-                        input("")
+                            if valid_pos_int:
+
+                                pos_int_received = True
+                                wordification_list, best_scorers, best_scores \
+                                    = generate_all_wordifications(sequence, int(pos_int))
+                                print("\nHere are your top-scoring wordifications!")
+                                for wordification in best_scorers:
+                                    print("\t" + wordification.upper())
+                                print("[Press Enter to return to the Main Menu]")
+                                input("\t")
+                            else:
+                                print("\nI'm sorry! This software couldn't compute that input!")
+                                print("\n[Press Enter to try again]")
+                                input("\t")
         elif choice == "3":
-            successful_sequence = False
-            while not successful_sequence:
-                print(
-                    """
-                    Welcome to the De-Wordification Menu! Please enter the wordified sequence you wish to translate!
-                    """
-                )
-                word_seq = input("Wordified sequence:\t")
-                print("Here is your wordification, translated!")
-                words_to_number(word_seq)
-                print(
-                    """
-                    [Press Enter to return to the Main Menu]
-                    """
-                )
-                input("")
+            print(
+                """
+Welcome to the De-Wordification Menu! Please enter the wordified sequence you wish to translate!
+                """
+            )
+            word_seq = input("\tWordified sequence:\t")
+            print("\nHere is your wordification, translated!\n")
+            words_to_number(word_seq)
+            print("\n[Press Enter to return to the Main Menu]")
+            input("")
         else:
             print(
                 """
-                I'm sorry! This software couldn't compute that input! Enter the digit of the command you 
-                desire to execute, then press the "Enter" key to confirm it!
-                
-                [Press Enter to try again]
+I'm sorry! This software couldn't compute that input! Enter the digit of the command you 
+desire to execute, then press the "Enter" key to confirm it!
+
+[Press Enter to try again]
                 """
-                 )
-            input("")
+            )
+            input("\t")
+
+# TODO make sure the dictionary works for them too
 
 
-   # TODO run input checking in a method and put it on all of the stock given methods, because they probably test using those
-   # TODO make sure the dictionary works for them too
+# run_various_tests()
 
-
-
-
-    #run_various_tests()
-
-    # TODO output things in all caps, no hyphens(?)
-
-
-
-    # TODO input checking for weird symbols, upper or lower, hyphens, etc.
 
 # TODO sanity check method to run all my wordifications back through my translator to check it
 
 if __name__ == "__main__":
     main()
-
