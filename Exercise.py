@@ -489,6 +489,8 @@ def clean_up_number_sequence(proposed_number_sequence):
     for character in proposed_number_sequence:
         letter_translation = reverse_phone_dict_lookup(character)
         number_translation = phone_dict_lookup(character)
+        if number_translation is None and (character == "0" or character == "1"):
+            number_translation = "VALID"  # never used, just important to not be None
         if letter_translation is None and number_translation is None:
             cleaning_required = True
         elif letter_translation is not None:
