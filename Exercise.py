@@ -1,6 +1,9 @@
 #! /usr/bin/env python
 """
-TODO
+A "wordification" program, made to robustly generate versions of phone numbers with some part of the numbers replaced
+by English words (or, conversely to translate words back into numbers. Includes a ranking system and a menu interface
+for the user, to better help their experience. Relies on an external dictionary, provided in the first piece of main().
+Developed, written, and debugged by Nathaniel "Nate" Cope, nathanielrcope@gmail.com
 """
 
 # state variable to allow the dictionary to only be loaded in once. I could avoid this by making the whole thing
@@ -109,12 +112,55 @@ def words_to_number(wordification):
     return
 
 
-def possible_one_from_each_list_permutations(list_of_lists_of_string_options):
+def is_number_string(test_string):
+    """
+    A small helper function for testing if a string is completely made of numbers or not.
+    Relies on the phone dictionary.
+    :param test_string: the string to check
+    :return: True if the string is entirely comprised of digits, False otherwise
+    """
+    is_valid_number_string = True
+    for character in test_string:
+        if phone_dict_lookup(character) is None and character != "1" and character != "0":
+            is_valid_number_string = False
+    return is_valid_number_string
+
+
+def format_with_hyphens(input_string):
+    """
+    Return a version of the input string with a pattern of hyphens inserted that matches the
+    usual patter of hyphens for phone numbers
+    :param input_string: the string to modify
+    :return: the modified version of the string
+    """
+    return_string = ""
+    chunk_counter = 0
+    for char_index in range(len(input_string)):
+        curr_char = input_string[char_index]
+        return_string += curr_char
+        chunk_counter += 1
+        # don't put any hyphens at the end
+        if char_index != len(input_string) - 1:
+            # leading ones in US phone numbers are "long distance", and are often offset by hyphens
+            if char_index == 0 and curr_char == "1":
+                return_string += "-"
+                # make sure the 1 isn't counted for the every-three-numbers-get-a-hyphen purposes
+                chunk_counter -= 1
+            # usually every three numbers is offset with a hyphen
+            elif chunk_counter == 3:
+                return_string += "-"
+                chunk_counter = 0
+
+    return return_string
+
+
+def possible_one_from_each_list_permutations(list_of_lists_of_string_options, hyphenated):
     """
     Return a list of strings representing every possible result of picking
     exactly one string from each of a given list of list of strings and concatenating them
     :param list_of_lists_of_string_options: a list of groups of strings,
                                             where one string from each group will be chosen per result
+    :param hyphenated: boolean of whether the user wants the string parts concatenated with hyphen between or not
     :return: a list of all possible concatenated resultant strings
     """
     possible_resultant_strings = []
@@ -143,8 +189,30 @@ def possible_one_from_each_list_permutations(list_of_lists_of_string_options):
             current_list_indices[index_of_list_to_increment] += 1
         # concatenate all those indices of those lists together
         result_string = ""
+        first_term = True
+        saved_part = ""
         for index in range(len(list_of_lists_of_string_options)):
-            result_string += str(list_of_lists_of_string_options[index][current_list_indices[index]])
+            current_term = saved_part + str(list_of_lists_of_string_options[index][current_list_indices[index]])
+            # collate all-number chunks so that 1-800 and 18-00 aren't seen as different
+            if is_number_string(current_term) and (index + 1) < len(list_of_lists_of_string_options):
+                next_term = str(list_of_lists_of_string_options[index + 1][current_list_indices[index + 1]])
+                # if the next one is a number part to combine with this one, save this one and skip the rest
+                # of this cycle
+                if is_number_string(next_term):
+                    saved_part = current_term
+                    continue
+            # clear any old saved parts
+            saved_part = ""
+            # only apply standard US phone number hyphening pattern to the first all-number term if hyphening at all
+            # (later number terms typically aren't hyphenated / don't get the "1-" benefit
+            if first_term and hyphenated and is_number_string(current_term):
+                result_string += format_with_hyphens(current_term)
+            else:
+                result_string += current_term
+            first_term = False
+            if hyphenated:
+                if index != (len(list_of_lists_of_string_options) - 1):
+                    result_string += "-"
         possible_resultant_strings.append(result_string)
 
     return possible_resultant_strings
@@ -262,7 +330,7 @@ def score_wordification(wordification, num_valid_translation_parts):
         if translation is not None:
             if not first_word_begun:
                 first_word_begun = True
-        # if it's a number
+        # if it's a number (symbols have been pared out at this point)
         else:
             if first_word_begun:
                 score += 15
@@ -308,7 +376,7 @@ def generate_valid_translations(number_string):
             letter_possibilities.append(lookup_result)
 
     # merge those lists with the list-merging method to get all the gibberish words it could be
-    word_possibilities = possible_one_from_each_list_permutations(letter_possibilities)
+    word_possibilities = possible_one_from_each_list_permutations(letter_possibilities, False)
 
     # if the word is a real word, add it to the valid translations list
     for word in word_possibilities:
@@ -345,10 +413,15 @@ def generate_all_wordifications(phone_number, best_x_to_save):
             # get a list of that chunk's valid *full* translations and add it to the larger list of valid options
             valid_translation_parts.append(generate_valid_translations(component))
         # add possible in-order concatenation of the valid translations parts to the final list
-        for wordification in possible_one_from_each_list_permutations(valid_translation_parts):
+        # get record of cleanly-hyphenated versions
+        final_form_wordifications = possible_one_from_each_list_permutations(valid_translation_parts, True)
+        # keep track of the index so we can use the proper cleanly hyphenated version
+        word_index = 0
+        for wordification in possible_one_from_each_list_permutations(valid_translation_parts, False):
+            print_form = final_form_wordifications[word_index]
             # don't add the original string, as it's not technically a wordification
-            if wordification != phone_number:
-                wordifications_list.add(wordification)
+            if wordification != phone_number:        # do comparisons with the easy-to-work with version
+                wordifications_list.add(print_form)  # add the cleanly hyphenated version
                 # Do some scoring - a bonus feature made to help the user find better wordifications
                 # scoring has to be done here, otherwise information about the number of words (AKA the number of valid
                 # translation parts) will be lost, and it's painful to recover.
@@ -359,35 +432,36 @@ def generate_all_wordifications(phone_number, best_x_to_save):
                 # if there are no recorded members yet, initialize the worst_score and add the first-comer to the list
                 if worst_score is None:
                     worst_score = score
-                    best_scorers.append(wordification)
+                    best_scorers.append(print_form)
                     best_scores.append(score)
                 # if the best x wordifications haven't been found yet, add it to the list
                 elif len(best_scorers) < best_x_to_save:
                     # no repeats! if you're already represented somehow, update your score if yours is better
-                    if wordification in best_scorers:
-                        if score < best_scores[best_scorers.index(wordification)]:
-                            best_scores[best_scorers.index(wordification)] = score
+                    if print_form in best_scorers:
+                        if score < best_scores[best_scorers.index(print_form)]:
+                            best_scores[best_scorers.index(print_form)] = score
                     # otherwise just add yourself to the list
                     else:
-                        best_scorers.append(wordification)
+                        best_scorers.append(print_form)
                         best_scores.append(score)
                     score_updated = True
                 # if the top X have already been found, but you're better than the worst of them, you need to find
                 # who you can replace
                 elif score < worst_score:
                     # no repeats! if you're already represented somehow, update your score if yours is better
-                    if wordification in best_scorers:
-                        if score < best_scores[best_scorers.index(wordification)]:
-                            best_scores[best_scorers.index(wordification)] = score
+                    if print_form in best_scorers:
+                        if score < best_scores[best_scorers.index(print_form)]:
+                            best_scores[best_scorers.index(print_form)] = score
                     # otherwise find the worst wordification in the list and replace its worst_score
                     else:
-                        best_scorers[best_scores.index(worst_score)] = wordification
+                        best_scorers[best_scores.index(worst_score)] = print_form
                         best_scores[best_scores.index(worst_score)] = score
                     score_updated = True
                 # update the worst score
                 if score_updated:
                     # remember, golf scoring
                     worst_score = max(best_scores)
+            word_index += 1
     # return all three lists for outside use
     return wordifications_list, best_scorers, best_scores
 
@@ -411,20 +485,20 @@ def run_various_tests():
     A function to hold various test cases. Used in debugging and left in for posterity.
     :return: Nothing
     """
-    test_possible_one_from_each_list_permutations = False
+    test_possible_one_from_each_list_permutations = True
     test_all_possible_segmentations = False
     test_valid_words = False
     test_generate_valid_translations = False
-    test_generate_all_wordifications = True
+    test_generate_all_wordifications = False
     test_words_to_number = False
     test_score_wordification = False
 
     if test_possible_one_from_each_list_permutations:
-        # list_of_lists_of_test_strings = [["I ","You ","We "],
-        # ["like ","hate "],["vanilla.","chocolate.","strawberry."]]
-        list_of_lists_of_test_strings = [['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
-                                         ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']]
-        resulting_strings = possible_one_from_each_list_permutations(list_of_lists_of_test_strings)
+        list_of_lists_of_test_strings = [["I", "You", "We"],
+                                         ["like", "hate"], ["vanilla.", "chocolate.", "strawberry."]]
+        # list_of_lists_of_test_strings = [['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
+        #                                 ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']]
+        resulting_strings = possible_one_from_each_list_permutations(list_of_lists_of_test_strings, True)
 
         for index in range(len(resulting_strings)):
             print(str(index + 1) + ": " + resulting_strings[index])
@@ -491,8 +565,11 @@ def clean_up_number_sequence(proposed_number_sequence):
         number_translation = phone_dict_lookup(character)
         if number_translation is None and (character == "0" or character == "1"):
             number_translation = "VALID"  # never used, just important to not be None
+        # Don't alert the user for removing hyphens or spaces, that's normal
         if letter_translation is None and number_translation is None:
-            cleaning_required = True
+            # separate if statement so that the catchall else still functions properly
+            if character != "-" and not character.isspace():
+                cleaning_required = True
         elif letter_translation is not None:
             cleaned_string += letter_translation
             cleaning_required = True
@@ -504,18 +581,25 @@ def clean_up_number_sequence(proposed_number_sequence):
 
 
 def main():
-    """ nice UI and some tests probably """
+    """
+    Read in and establish the dictionary, then run users through a friendly menu system to fill their wordification
+    needs.
+    """
 
     global valid_word_set
 
-    with open('scrabble_dict_2015.txt') as word_file:
+    with open('na_scrabble_word_list.txt') as word_file:
         valid_word_set = set(word.strip().lower() for word in word_file)
 
     # Source for efficient check:
     # https://stackoverflow.com/questions/3788870/how-to-check-if-a-word-is-an-english-word-with-python
     # Source for scrabble dictionary
-    # https://boardgames.stackexchange.com/questions/38366/latest-collins-scrabble-words-list-in-text-file
+    # https://www.wordgamedictionary.com/word-lists/
 
+    # bugtesting function to execute periodic unit tests; left in for posterity
+    # run_various_tests()
+
+    # menu code
     print(
         """
 Hello, and welcome to the Picklerobot Wordification Software (TM), the one-stop
@@ -665,13 +749,6 @@ desire to execute, then press the "Enter" key to confirm it!
             )
             input("\t")
 
-# TODO make sure the dictionary works for them too
-
-
-# run_various_tests()
-
-
-# TODO sanity check method to run all my wordifications back through my translator to check it
 
 if __name__ == "__main__":
     main()
