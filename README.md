@@ -1,4 +1,4 @@
-# Picklerobot_Exercise
+# Wordification_Exercise
 This is a programming exercise assigned to me for a first-round interview!
 
 The idea is to make an application that allows a user to "wordify" a phone number; that is, to generate version of a phone number 
