@@ -692,6 +692,8 @@ I'm sorry! This software couldn't compute that input!
                 if not return_to_menu:
                     pos_int_received = False
                     print("\nInput successful!")
+                    if len(sequence) > 11:
+                        print("\nThat's a long number! This might take a while!")
                     while not pos_int_received:
                         print("\nHow many top wordifications would you like to show?")
                         print("\tPlease enter a number (positive integer) or all (A):")
@@ -699,9 +701,12 @@ I'm sorry! This software couldn't compute that input!
                         if pos_int == "all" or pos_int == "a":
                             pos_int_received = True
                             wordification_list, best_scorers, best_scores = generate_all_wordifications(sequence, 1)
-                            print("\nHere are your wordifications!")
-                            for wordification in wordification_list:
-                                print("\t" + wordification.upper())
+                            if len(wordification_list) == 0:
+                                print("\nSorry! There were no valid wordifications for this input!")
+                            else:
+                                print("\nHere are your wordifications!")
+                                for wordification in wordification_list:
+                                    print("\t" + wordification.upper())
                             print("[Press Enter to return to the Main Menu]")
                             input("\t")
                         else:
@@ -718,9 +723,12 @@ I'm sorry! This software couldn't compute that input!
                                 pos_int_received = True
                                 wordification_list, best_scorers, best_scores \
                                     = generate_all_wordifications(sequence, int(pos_int))
-                                print("\nHere are your top-scoring wordifications!")
-                                for wordification in best_scorers:
-                                    print("\t" + wordification.upper())
+                                if len(wordification_list) == 0:
+                                    print("\nSorry! There were no valid wordifications for this input!")
+                                else:
+                                    print("\nHere are your top-scoring wordifications!")
+                                    for wordification in best_scorers:
+                                        print("\t" + wordification.upper())
                                 print("[Press Enter to return to the Main Menu]")
                                 input("\t")
                             else:
