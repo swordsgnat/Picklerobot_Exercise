@@ -14,7 +14,7 @@ This relies on the Scrabble dictionary below (chosen for the fact that Scrabble 
 
 https://www.wordgamedictionary.com/word-lists/
 
-Also thanks to this SO thread, which is where I found information on efficient dictionary checks"
+Also thanks to this SO thread, which is where I found information on efficient dictionary checks:
 
 https://stackoverflow.com/questions/3788870/how-to-check-if-a-word-is-an-english-word-with-python
 
